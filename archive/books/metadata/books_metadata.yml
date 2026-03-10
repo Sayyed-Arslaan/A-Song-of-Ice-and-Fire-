@@ -1,0 +1,83 @@
+- title: "A Game of Thrones"
+  slug: "a-game-of-thrones"
+  publication_date: "1996-08-06"
+  original_publication_year: 1996
+  pages: 694
+  isbn: "0-553-10354-7"
+  cover_filename: "1996-08-06__a-game-of-thrones__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 1"
+
+- title: "A Clash of Kings"
+  slug: "a-clash-of-kings"
+  publication_date: "1998-11-16"
+  original_publication_year: 1998
+  pages: 768
+  isbn: "0-553-10803-4"
+  cover_filename: "1998-11-16__a-clash-of-kings__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 2"
+
+- title: "A Storm of Swords"
+  slug: "a-storm-of-swords"
+  publication_date: "2000-08-08"
+  original_publication_year: 2000
+  pages: 973
+  isbn: "0-553-10663-5"
+  cover_filename: "2000-08-08__a-storm-of-swords__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 3"
+
+- title: "A Feast for Crows"
+  slug: "a-feast-for-crows"
+  publication_date: "2005-10-17"
+  original_publication_year: 2005
+  pages: 753
+  isbn: "0-553-80150-3"
+  cover_filename: "2005-10-17__a-feast-for-crows__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 4"
+
+- title: "A Dance with Dragons"
+  slug: "a-dance-with-dragons"
+  publication_date: "2011-07-12"
+  original_publication_year: 2011
+  pages: 1056
+  isbn: "978-0553801477"
+  cover_filename: "2011-07-12__a-dance-with-dragons__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 5"
+
+- title: "The Winds of Winter"
+  slug: "the-winds-of-winter"
+  publication_date: null
+  original_publication_year: null
+  pages: 0
+  isbn: null
+  cover_filename: "tbd__the-winds-of-winter__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 6"
+
+- title: "A Dream of Spring"
+  slug: "a-dream-of-spring"
+  publication_date: null
+  original_publication_year: null
+  pages: 0
+  isbn: null
+  cover_filename: "tbd__a-dream-of-spring__v01.jpg"
+  source: "Generated"
+  credit: "Placeholder"
+  license: "contributor-provided"
+  notes: "Book 7"
