@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Timeline</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        #timeline { width: 100%; height: 300px; overflow-x: auto; }
+        .node { cursor: pointer; }
+        .tooltip {
+            position: absolute; text-align: left; width: 250px;
+            padding: 10px; font: 12px sans-serif; background: lightsteelblue;
+            border: 0px; border-radius: 8px; pointer-events: none; opacity: 0;
+        }
+        .tooltip img { width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h2>Interactive Book Timeline</h2>
+    <div id="timeline"></div>
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        const books = [{"title": "A Game of Thrones", "slug": "a-game-of-thrones", "publication_date": "1996-08-06", "original_publication_year": 1996, "pages": 694, "isbn": "0-553-10354-7", "cover_filename": "a-game-of-thrones__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 1"}, {"title": "A Clash of Kings", "slug": "a-clash-of-kings", "publication_date": "1998-11-16", "original_publication_year": 1998, "pages": 768, "isbn": "0-553-10803-4", "cover_filename": "a-clash-of-kings__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 2"}, {"title": "A Storm of Swords", "slug": "a-storm-of-swords", "publication_date": "2000-08-08", "original_publication_year": 2000, "pages": 973, "isbn": "0-553-10663-5", "cover_filename": "a-storm-of-swords__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 3"}, {"title": "A Feast for Crows", "slug": "a-feast-for-crows", "publication_date": "2005-10-17", "original_publication_year": 2005, "pages": 753, "isbn": "0-553-80150-3", "cover_filename": "a-feast-for-crows__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 4"}, {"title": "A Dance with Dragons", "slug": "a-dance-with-dragons", "publication_date": "2011-07-12", "original_publication_year": 2011, "pages": 1056, "isbn": "978-0553801477", "cover_filename": "a-dance-with-dragons__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 5"}, {"title": "The Winds of Winter", "slug": "the-winds-of-winter", "publication_date": null, "original_publication_year": null, "pages": 0, "isbn": null, "cover_filename": "the-winds-of-winter__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 6"}, {"title": "A Dream of Spring", "slug": "a-dream-of-spring", "publication_date": null, "original_publication_year": null, "pages": 0, "isbn": null, "cover_filename": "a-dream-of-spring__cover_placeholder.png", "source": "Generated", "credit": "Placeholder", "license": "contributor-provided", "notes": "Book 7"}];
+
+        const width = 1000;
+        const height = 200;
+        const margin = {top: 20, right: 20, bottom: 20, left: 50};
+
+        const svg = d3.select("#timeline").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Filter out unreleased for timeline scale
+        const releasedBooks = books.filter(d => d.publication_date);
+
+        const parseTime = d3.timeParse("%Y-%m-%d");
+        releasedBooks.forEach(d => {
+            d.date = parseTime(d.publication_date);
+        });
+
+        // Let's just use a simple linear scale based on year for unreleased
+        const dates = releasedBooks.map(d => d.date);
+        const minDate = d3.min(dates);
+        const maxDate = new Date(d3.max(dates).getFullYear() + 5, 0, 1);
+
+        books.forEach(d => {
+            if (!d.publication_date) {
+                d.date = new Date(maxDate.getFullYear() + (books.indexOf(d) * 2), 0, 1);
+            }
+        });
+
+        const x = d3.scaleTime()
+            .domain([minDate, d3.max(books.map(d => d.date))])
+            .range([margin.left, width - margin.right]);
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height / 2})`)
+            .call(d3.axisBottom(x));
+
+        const tooltip = d3.select("#tooltip");
+
+        svg.selectAll("circle")
+            .data(books)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("cx", d => x(d.date))
+            .attr("cy", height / 2)
+            .attr("r", 8)
+            .style("fill", d => d.publication_date ? "steelblue" : "white")
+            .style("stroke", "steelblue")
+            .style("stroke-width", 2)
+            .on("mouseover", function(event, d) {
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.html(`
+                    <strong>${d.title}</strong><br/>
+                    Pages: ${d.pages}<br/>
+                    Year: ${d.original_publication_year || 'TBD'}<br/>
+                    License: ${d.license}<br/>
+                    <img src="../archive/books/book-covers/thumbnails/${d.cover_filename}" alt="${d.title} cover">
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                tooltip.transition().duration(500).style("opacity", 0);
+            });
+    </script>
+</body>
+</html>

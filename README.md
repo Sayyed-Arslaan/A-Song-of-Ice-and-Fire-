@@ -54,5 +54,10 @@ A/
 
 ---
 
+## 📚 All Books Gallery
+Check out the [All Books Gallery & Graphs](docs/all-books.md) for a complete visual overview of the canonical books, including a covers grid, publication timelines, and page count statistics.
+
+---
+
 ## 🚀 Future Expansion
 As the world of *A Song of Ice and Fire* continues to grow, so will this repository! It is designed to scale and will expand into a large, fully organized visual archive of the entire universe, with hundreds or thousands of images added over time. Feel free to explore, contribute, and enjoy! ⚔️
