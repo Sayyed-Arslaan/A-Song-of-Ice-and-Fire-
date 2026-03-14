@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Song of Ice and Fire Archive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="title">A Song of Ice and Fire Archive</h1>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search by filename..." aria-label="Search images">
+            </div>
+        </div>
+        <nav class="az-nav">
+            <ul id="az-list">
+                <li><button class="nav-btn active" data-letter="ALL">ALL</button></li>
+                <!-- A-Z buttons will be populated here -->
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <!-- The gallery container for virtualized rendering -->
+        <div id="gallery" class="gallery">
+            <!-- Items appended via JS -->
+        </div>
+
+        <div id="loading" class="loading">Loading assets from Westeros and Essos...</div>
+        <div id="no-results" class="no-results hidden">No Ravens returned with news. Try another search.</div>
+    </main>
+
+    <!-- Fullscreen Image Modal -->
+    <div id="image-modal" class="modal hidden-modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <img id="modal-img" src="" alt="Fullscreen image">
+            <div class="modal-caption" id="modal-caption"></div>
+        </div>
+    </div>
+
+    <script src="gallery.js"></script>
+</body>
+</html>
