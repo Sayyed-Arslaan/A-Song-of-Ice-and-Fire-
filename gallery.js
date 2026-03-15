@@ -29,6 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Ensure gallery container has positioning context for absolutely positioned children
   galleryContainer.style.position = galleryContainer.style.position || 'relative';
 
+  function getContainerWidth() {
+    let w = galleryContainer.clientWidth;
+    if (!w || w === 0) w = galleryContainer.getBoundingClientRect().width;
+    // Fallback if the container is entirely hidden or DOM isn't painted yet
+    if (!w || w === 0) {
+      const computedStyle = window.getComputedStyle(galleryContainer);
+      const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+      const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+      w = window.innerWidth - (paddingLeft + paddingRight + 64); // rough estimate subtracting typical margins
+    }
+    return Math.max(w, 200); // minimum fallback width
+  }
+
   // Intersection Observer for lazy loading images
   const imageObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
@@ -51,9 +64,19 @@ document.addEventListener('DOMContentLoaded', () => {
     await fetchImages();
 
     // try to set containerWidth immediately (covers cases where ResizeObserver doesn't fire)
-    containerWidth = galleryContainer.clientWidth || galleryContainer.getBoundingClientRect().width || window.innerWidth;
+    containerWidth = getContainerWidth();
     calculateGrid();
     renderVisibleItems();
+
+    // Explicitly hide loading UI as a fallback in case it got stuck
+    loadingEl.classList.add('hidden');
+
+    // Setup a slight delay calculation to handle late-loading CSS causing reflows
+    setTimeout(() => {
+      containerWidth = getContainerWidth();
+      calculateGrid();
+      renderVisibleItems();
+    }, 100);
 
     // Setup Resize Observer to recalculate grid layout
     const resizeObserver = new ResizeObserver(entries => {
@@ -73,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Also recalc on orientation change or window resize
     window.addEventListener('resize', () => {
-      containerWidth = galleryContainer.clientWidth || window.innerWidth;
+      containerWidth = getContainerWidth();
       calculateGrid();
       renderVisibleItems();
     }, { passive: true });
@@ -148,16 +171,32 @@ document.addEventListener('DOMContentLoaded', () => {
   function normalizeManifest(data) {
     const out = [];
 
+    function formatPath(p) {
+      if (!p) return '';
+      let formatted = p;
+      if (!formatted.startsWith('./') && !formatted.startsWith('/')) {
+        formatted = './' + formatted;
+      } else if (formatted.startsWith('/')) {
+        formatted = '.' + formatted;
+      }
+      // Encode URI and strictly encode single quotes to prevent GitHub Pages issues
+      return encodeURI(formatted).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
+    }
+
     // Case A: manifest is already an array of objects
     if (Array.isArray(data)) {
       data.forEach(obj => {
         if (obj && typeof obj === 'object') {
           // ensure required keys exist; fallback to best-effort
           const id = obj.id || obj.path || `${obj.folder || 'A'}/${obj.filename || (obj.name || 'unknown')}`;
-          const path = obj.path || obj.id || id;
-          const thumbnail = obj.thumbnail || path;
-          const name = (obj.name || obj.filename || path.split('/').pop()).replace(/\.[^/.]+$/, '');
-          const folder = obj.folder || (path.split('/')[0] || 'A').toUpperCase();
+          const rawPath = obj.path || obj.id || id;
+          const rawThumbnail = obj.thumbnail || rawPath;
+          const path = formatPath(rawPath);
+          const thumbnail = formatPath(rawThumbnail);
+          const name = (obj.name || obj.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
+          const folderSegments = rawPath.split('/');
+          const f = obj.folder || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+          const folder = f.toUpperCase();
           out.push({ id, path, thumbnail, name, folder });
         }
       });
@@ -171,18 +210,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!Array.isArray(entries)) return;
         entries.forEach(entry => {
           if (typeof entry === 'string') {
-            const path = entry;
+            const rawPath = entry;
+            const path = formatPath(rawPath);
             const thumbnail = path;
-            const name = path.split('/').pop().replace(/\.[^/.]+$/, '');
-            const id = path;
-            const folder = (folderKey || path.split('/')[0] || 'A').toUpperCase();
+            const name = rawPath.split('/').pop().replace(/\.[^/.]+$/, '');
+            const id = rawPath;
+            const folderSegments = rawPath.split('/');
+            const f = folderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+            const folder = f.toUpperCase();
             out.push({ id, path, thumbnail, name, folder });
           } else if (entry && typeof entry === 'object') {
             const id = entry.id || entry.path || `${folderKey}/${entry.filename || entry.name || 'unknown'}`;
-            const path = entry.path || entry.id || id;
-            const thumbnail = entry.thumbnail || path;
-            const name = (entry.name || entry.filename || path.split('/').pop()).replace(/\.[^/.]+$/, '');
-            const folder = entry.folder || folderKey || (path.split('/')[0] || 'A');
+            const rawPath = entry.path || entry.id || id;
+            const rawThumbnail = entry.thumbnail || rawPath;
+            const path = formatPath(rawPath);
+            const thumbnail = formatPath(rawThumbnail);
+            const name = (entry.name || entry.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
+            const folderSegments = rawPath.split('/');
+            const f = entry.folder || folderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+            const folder = f.toUpperCase();
             out.push({ id, path, thumbnail, name, folder });
           }
         });
@@ -196,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchImages() {
     try {
-      const response = await fetch('images.json', { cache: 'no-store' });
+      const response = await fetch('./images.json', { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to fetch manifest');
       const raw = await response.json();
 
@@ -249,14 +295,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       noResultsEl.classList.add('hidden');
       // set containerWidth fallback if not set
-      containerWidth = galleryContainer.clientWidth || containerWidth || window.innerWidth;
+      containerWidth = getContainerWidth();
       calculateGrid();
       renderVisibleItems();
     }
   }
 
   function calculateGrid() {
-    containerWidth = galleryContainer.clientWidth || containerWidth || window.innerWidth;
+    containerWidth = getContainerWidth();
     if (containerWidth === 0) return;
 
     columns = Math.max(1, Math.floor((containerWidth + gap) / (itemMinWidth + gap)));
@@ -325,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // inner HTML (safe text set below)
         el.innerHTML = `
           <div class="item-image-wrapper">
-            <img data-src="${imgData.thumbnail}" alt="" loading="lazy">
+            <img data-src="${imgData.thumbnail}" alt="" loading="lazy" onerror="this.onerror=null; this.closest('.item-image-wrapper').style.background='#333'">
           </div>
           <div class="item-info">
             <div class="item-title"></div>
