@@ -183,22 +183,41 @@ document.addEventListener('DOMContentLoaded', () => {
       return encodeURI(formatted).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
     }
 
+    function normalizeEntry(entry, defaultFolderKey = null) {
+      if (typeof entry === 'string') {
+        const rawPath = entry;
+        const path = formatPath(rawPath);
+        const thumbnail = path;
+        const name = rawPath.split('/').pop().replace(/\.[^/.]+$/, '');
+        const id = rawPath;
+        const folderSegments = rawPath.split('/');
+        const f = defaultFolderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+        const folder = f.toUpperCase();
+        return { id, path, thumbnail, name, folder };
+      }
+
+      if (entry && typeof entry === 'object') {
+        // ensure required keys exist; fallback to best-effort
+        const id = entry.id || entry.path || `${entry.folder || defaultFolderKey || 'A'}/${entry.filename || entry.name || 'unknown'}`;
+        const rawPath = entry.path || entry.id || id;
+        const rawThumbnail = entry.thumbnail || rawPath;
+        const path = formatPath(rawPath);
+        const thumbnail = formatPath(rawThumbnail);
+        const name = (entry.name || entry.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
+        const folderSegments = rawPath.split('/');
+        const f = entry.folder || defaultFolderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+        const folder = f.toUpperCase();
+        return { id, path, thumbnail, name, folder };
+      }
+
+      return null;
+    }
+
     // Case A: manifest is already an array of objects
     if (Array.isArray(data)) {
       data.forEach(obj => {
-        if (obj && typeof obj === 'object') {
-          // ensure required keys exist; fallback to best-effort
-          const id = obj.id || obj.path || `${obj.folder || 'A'}/${obj.filename || (obj.name || 'unknown')}`;
-          const rawPath = obj.path || obj.id || id;
-          const rawThumbnail = obj.thumbnail || rawPath;
-          const path = formatPath(rawPath);
-          const thumbnail = formatPath(rawThumbnail);
-          const name = (obj.name || obj.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
-          const folderSegments = rawPath.split('/');
-          const f = obj.folder || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
-          const folder = f.toUpperCase();
-          out.push({ id, path, thumbnail, name, folder });
-        }
+        const normalized = normalizeEntry(obj);
+        if (normalized) out.push(normalized);
       });
       return out;
     }
@@ -209,28 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const entries = data[folderKey];
         if (!Array.isArray(entries)) return;
         entries.forEach(entry => {
-          if (typeof entry === 'string') {
-            const rawPath = entry;
-            const path = formatPath(rawPath);
-            const thumbnail = path;
-            const name = rawPath.split('/').pop().replace(/\.[^/.]+$/, '');
-            const id = rawPath;
-            const folderSegments = rawPath.split('/');
-            const f = folderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
-            const folder = f.toUpperCase();
-            out.push({ id, path, thumbnail, name, folder });
-          } else if (entry && typeof entry === 'object') {
-            const id = entry.id || entry.path || `${folderKey}/${entry.filename || entry.name || 'unknown'}`;
-            const rawPath = entry.path || entry.id || id;
-            const rawThumbnail = entry.thumbnail || rawPath;
-            const path = formatPath(rawPath);
-            const thumbnail = formatPath(rawThumbnail);
-            const name = (entry.name || entry.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
-            const folderSegments = rawPath.split('/');
-            const f = entry.folder || folderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
-            const folder = f.toUpperCase();
-            out.push({ id, path, thumbnail, name, folder });
-          }
+          const normalized = normalizeEntry(entry, folderKey);
+          if (normalized) out.push(normalized);
         });
       });
       return out;
