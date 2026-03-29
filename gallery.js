@@ -252,10 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderVisibleItems() {
-    if (filteredImages.length === 0) return;
-    if (columns === 0) { calculateGrid(); if (columns === 0) return; }
-
+  function getVisibleRange() {
     const scrollY = window.scrollY || window.pageYOffset;
     const windowHeight = window.innerHeight;
 
@@ -271,62 +268,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const startIndex = startRow * columns;
     const endIndex = Math.min(filteredImages.length, endRow * columns);
 
-    const newRenderedIndices = new Set();
-    const itemWidth = (containerWidth - (gap * (columns - 1))) / columns;
+    return { startIndex, endIndex };
+  }
 
-    for (let i = startIndex; i < endIndex; i++) {
-      newRenderedIndices.add(i);
+  function createGalleryItemElement(i, itemWidth) {
+    const imgData = filteredImages[i];
+    const r = Math.floor(i / columns);
+    const c = i % columns;
 
-      if (!renderedItems.has(i)) {
-        const imgData = filteredImages[i];
-        const r = Math.floor(i / columns);
-        const c = i % columns;
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.dataset.id = imgData.id;
 
-        const el = document.createElement('div');
-        el.className = 'gallery-item';
-        el.dataset.id = imgData.id;
+    const x = c * (itemWidth + gap);
+    const y = r * (itemHeight + gap);
 
-        const x = c * (itemWidth + gap);
-        const y = r * (itemHeight + gap);
+    el.style.transform = `translate(${x}px, ${y}px)`;
+    el.style.width = `${itemWidth}px`;
+    el.style.height = `${itemHeight}px`;
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.boxSizing = 'border-box';
 
-        el.style.transform = `translate(${x}px, ${y}px)`;
-        el.style.width = `${itemWidth}px`;
-        el.style.height = `${itemHeight}px`;
-        el.style.position = 'absolute';
-        el.style.top = '0';
-        el.style.left = '0';
-        el.style.boxSizing = 'border-box';
+    // inner HTML (safe text set below)
+    el.innerHTML = `
+      <div class="item-image-wrapper">
+        <img data-src="${imgData.thumbnail}" alt="" loading="lazy" onerror="this.onerror=null; this.closest('.item-image-wrapper').style.background='#333'">
+      </div>
+      <div class="item-info">
+        <div class="item-title"></div>
+        <div class="item-folder"></div>
+      </div>
+    `;
 
-        // inner HTML (safe text set below)
-        el.innerHTML = `
-          <div class="item-image-wrapper">
-            <img data-src="${imgData.thumbnail}" alt="" loading="lazy" onerror="this.onerror=null; this.closest('.item-image-wrapper').style.background='#333'">
-          </div>
-          <div class="item-info">
-            <div class="item-title"></div>
-            <div class="item-folder"></div>
-          </div>
-        `;
+    // Set text securely
+    const imgNode = el.querySelector('img');
+    imgNode.alt = imgData.name || imgData.filename || '';
 
-        // Set text securely
-        const imgNode = el.querySelector('img');
-        imgNode.alt = imgData.name || imgData.filename || '';
+    const titleNode = el.querySelector('.item-title');
+    titleNode.textContent = imgData.name || imgData.filename || imgData.path.split('/').pop();
 
-        const titleNode = el.querySelector('.item-title');
-        titleNode.textContent = imgData.name || imgData.filename || imgData.path.split('/').pop();
+    const folderNode = el.querySelector('.item-folder');
+    folderNode.textContent = `Folder ${imgData.folder || ''}`;
 
-        const folderNode = el.querySelector('.item-folder');
-        folderNode.textContent = `Folder ${imgData.folder || ''}`;
+    galleryContainer.appendChild(el);
+    renderedItems.set(i, { el, index: i });
 
-        galleryContainer.appendChild(el);
-        renderedItems.set(i, { el, index: i });
+    const img = el.querySelector('img');
+    imageObserver.observe(img);
+  }
 
-        const img = el.querySelector('img');
-        imageObserver.observe(img);
-      }
-    }
-
-    // Cleanup out-of-bounds items
+  function cleanupOutOfBounds(newRenderedIndices) {
     for (const [index, item] of Array.from(renderedItems.entries())) {
       if (!newRenderedIndices.has(index)) {
         const img = item.el.querySelector('img');
@@ -335,6 +328,26 @@ document.addEventListener('DOMContentLoaded', () => {
         renderedItems.delete(index);
       }
     }
+  }
+
+  function renderVisibleItems() {
+    if (filteredImages.length === 0) return;
+    if (columns === 0) { calculateGrid(); if (columns === 0) return; }
+
+    const { startIndex, endIndex } = getVisibleRange();
+
+    const newRenderedIndices = new Set();
+    const itemWidth = (containerWidth - (gap * (columns - 1))) / columns;
+
+    for (let i = startIndex; i < endIndex; i++) {
+      newRenderedIndices.add(i);
+
+      if (!renderedItems.has(i)) {
+        createGalleryItemElement(i, itemWidth);
+      }
+    }
+
+    cleanupOutOfBounds(newRenderedIndices);
   }
 
   let currentModalIndex = -1;
