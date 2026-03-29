@@ -5,6 +5,10 @@ import json
 import argparse
 import csv
 from PIL import Image
+from datetime import datetime
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import networkx as nx
 
 def load_and_validate_metadata(metadata_path, covers_dir):
     if not os.path.exists(metadata_path):
@@ -127,10 +131,6 @@ def generate_covers_grid(books, covers_dir, out_dir):
         writer.writerows(captions)
     print(f"Generated captions CSV: {csv_path}")
 
-import matplotlib.pyplot as plt
-from datetime import datetime
-import matplotlib.dates as mdates
-
 def generate_publication_timeline(books, out_dir):
     timeline_path = os.path.join(out_dir, "publication-timeline.svg")
 
@@ -212,8 +212,6 @@ def generate_pagecount_chart(books, out_dir):
     plt.savefig(chart_path, dpi=300)
     plt.close()
     print(f"Generated page-count chart: {chart_path}")
-
-import networkx as nx
 
 def generate_pov_network(books, out_dir, scripts_dir):
     pov_path = os.path.join(scripts_dir, "pov_list.yml")
