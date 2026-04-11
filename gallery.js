@@ -243,12 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update positions of existing rendered items
     for (const [index, item] of renderedItems.entries()) {
-      const r = Math.floor(index / columns);
-      const c = index % columns;
-      const x = c * (itemWidth + gap);
-      const y = r * (itemHeight + gap);
-      item.el.style.transform = `translate(${x}px, ${y}px)`;
-      item.el.style.width = `${itemWidth}px`;
+      const { x, y } = calculateItemPosition(index, itemWidth);
+      applyItemStyles(item.el, x, y, itemWidth);
     }
   }
 
@@ -271,18 +267,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return { startIndex, endIndex };
   }
 
-  function createGalleryItemElement(i, itemWidth) {
-    const imgData = filteredImages[i];
-    const r = Math.floor(i / columns);
-    const c = i % columns;
 
-    const el = document.createElement('div');
-    el.className = 'gallery-item';
-    el.dataset.id = imgData.id;
-
+  function calculateItemPosition(index, itemWidth) {
+    const r = Math.floor(index / columns);
+    const c = index % columns;
     const x = c * (itemWidth + gap);
     const y = r * (itemHeight + gap);
+    return { x, y };
+  }
 
+  function applyItemStyles(el, x, y, itemWidth) {
     el.style.transform = `translate(${x}px, ${y}px)`;
     el.style.width = `${itemWidth}px`;
     el.style.height = `${itemHeight}px`;
@@ -290,6 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.top = '0';
     el.style.left = '0';
     el.style.boxSizing = 'border-box';
+  }
+
+  function buildGalleryItemDOM(imgData) {
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.dataset.id = imgData.id;
 
     // inner HTML (safe text set below)
     el.innerHTML = `
@@ -311,6 +311,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const folderNode = el.querySelector('.item-folder');
     folderNode.textContent = `Folder ${imgData.folder || ''}`;
+
+    return el;
+  }
+
+  function createGalleryItemElement(i, itemWidth) {
+    const imgData = filteredImages[i];
+
+    const { x, y } = calculateItemPosition(i, itemWidth);
+    const el = buildGalleryItemDOM(imgData);
+    applyItemStyles(el, x, y, itemWidth);
 
     galleryContainer.appendChild(el);
     renderedItems.set(i, { el, index: i });
