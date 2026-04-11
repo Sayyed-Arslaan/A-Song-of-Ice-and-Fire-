@@ -181,13 +181,21 @@ document.addEventListener('DOMContentLoaded', () => {
       allImages = normalizeManifest(raw);
 
       // ensure folder letters are uppercase single characters where possible
-      allImages.forEach(img => {
+      for (let i = 0; i < allImages.length; i++) {
+        const img = allImages[i];
         if (img.folder && typeof img.folder === 'string') {
           img.folder = img.folder.trim().charAt(0).toUpperCase();
         } else {
-          img.folder = (img.path && img.path.split('/')[0]) ? img.path.split('/')[0].toUpperCase() : 'A';
+          const path = img.path;
+          if (path) {
+            const slashIdx = path.indexOf('/');
+            const firstPart = slashIdx === -1 ? path : path.substring(0, slashIdx);
+            img.folder = firstPart ? firstPart.toUpperCase() : 'A';
+          } else {
+            img.folder = 'A';
+          }
         }
-      });
+      }
 
       // optional: sort by folder then name for stable order
       allImages.sort((a, b) => {
@@ -245,12 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update positions of existing rendered items
     for (const [index, item] of renderedItems.entries()) {
-      const r = Math.floor(index / columns);
-      const c = index % columns;
-      const x = c * (itemWidth + gap);
-      const y = r * (itemHeight + gap);
-      item.el.style.transform = `translate(${x}px, ${y}px)`;
-      item.el.style.width = `${itemWidth}px`;
+      const { x, y } = calculateItemPosition(index, itemWidth);
+      applyItemStyles(item.el, x, y, itemWidth);
     }
   }
 
@@ -273,19 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return { startIndex, endIndex };
   }
 
-  function createGalleryItemElement(i, itemWidth) {
-    const imgData = filteredImages[i];
-    const r = Math.floor(i / columns);
-    const c = i % columns;
 
-    const el = document.createElement('div');
-    el.className = 'gallery-item';
-    el.dataset.id = imgData.id;
-    el.dataset.index = i;
-
+  function calculateItemPosition(index, itemWidth) {
+    const r = Math.floor(index / columns);
+    const c = index % columns;
     const x = c * (itemWidth + gap);
     const y = r * (itemHeight + gap);
+    return { x, y };
+  }
 
+  function applyItemStyles(el, x, y, itemWidth) {
     el.style.transform = `translate(${x}px, ${y}px)`;
     el.style.width = `${itemWidth}px`;
     el.style.height = `${itemHeight}px`;
@@ -293,6 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.top = '0';
     el.style.left = '0';
     el.style.boxSizing = 'border-box';
+  }
+
+  function buildGalleryItemDOM(imgData) {
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.dataset.id = imgData.id;
 
     // inner HTML (safe text set below)
     el.innerHTML = `
@@ -315,6 +322,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const folderNode = el.querySelector('.item-folder');
     folderNode.textContent = `Folder ${imgData.folder || ''}`;
 
+    return el;
+  }
+
+  function createGalleryItemElement(i, itemWidth) {
+    const imgData = filteredImages[i];
+
+    const { x, y } = calculateItemPosition(i, itemWidth);
+    const el = buildGalleryItemDOM(imgData);
+    applyItemStyles(el, x, y, itemWidth);
+
     galleryContainer.appendChild(el);
     renderedItems.set(i, { el, index: i });
 
@@ -323,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function cleanupOutOfBounds(newRenderedIndices) {
-    for (const [index, item] of Array.from(renderedItems.entries())) {
+    for (const [index, item] of renderedItems.entries()) {
       if (!newRenderedIndices.has(index)) {
         const img = item.el.querySelector('img');
         if (img) imageObserver.unobserve(img);
