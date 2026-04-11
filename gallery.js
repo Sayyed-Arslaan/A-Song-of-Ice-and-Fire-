@@ -179,13 +179,21 @@ document.addEventListener('DOMContentLoaded', () => {
       allImages = normalizeManifest(raw);
 
       // ensure folder letters are uppercase single characters where possible
-      allImages.forEach(img => {
+      for (let i = 0; i < allImages.length; i++) {
+        const img = allImages[i];
         if (img.folder && typeof img.folder === 'string') {
           img.folder = img.folder.trim().charAt(0).toUpperCase();
         } else {
-          img.folder = (img.path && img.path.split('/')[0]) ? img.path.split('/')[0].toUpperCase() : 'A';
+          const path = img.path;
+          if (path) {
+            const slashIdx = path.indexOf('/');
+            const firstPart = slashIdx === -1 ? path : path.substring(0, slashIdx);
+            img.folder = firstPart ? firstPart.toUpperCase() : 'A';
+          } else {
+            img.folder = 'A';
+          }
         }
-      });
+      }
 
       // optional: sort by folder then name for stable order
       allImages.sort((a, b) => {
