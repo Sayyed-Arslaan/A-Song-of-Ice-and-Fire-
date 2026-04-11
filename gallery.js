@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+  const galleryItemTemplate = document.createElement('template');
+  galleryItemTemplate.innerHTML = `
+    <div class="item-image-wrapper">
+      <img data-src="" alt="" loading="lazy" onerror="this.onerror=null; this.closest('.item-image-wrapper').style.background='#333'">
+    </div>
+    <div class="item-info">
+      <div class="item-title"></div>
+      <div class="item-folder"></div>
+    </div>
+  `;
+
   // State
   let allImages = [];
   let filteredImages = [];
@@ -299,19 +311,11 @@ document.addEventListener('DOMContentLoaded', () => {
     el.className = 'gallery-item';
     el.dataset.id = imgData.id;
 
-    // inner HTML (safe text set below)
-    el.innerHTML = `
-      <div class="item-image-wrapper">
-        <img data-src="${imgData.thumbnail}" alt="" loading="lazy" onerror="this.onerror=null; this.closest('.item-image-wrapper').style.background='#333'">
-      </div>
-      <div class="item-info">
-        <div class="item-title"></div>
-        <div class="item-folder"></div>
-      </div>
-    `;
+    el.appendChild(galleryItemTemplate.content.cloneNode(true));
 
     // Set text securely
     const imgNode = el.querySelector('img');
+    imgNode.dataset.src = imgData.thumbnail;
     imgNode.alt = imgData.name || imgData.filename || '';
 
     const titleNode = el.querySelector('.item-title');
