@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function cleanupOutOfBounds(newRenderedIndices) {
-    for (const [index, item] of Array.from(renderedItems.entries())) {
+    for (const [index, item] of renderedItems.entries()) {
       if (!newRenderedIndices.has(index)) {
         const img = item.el.querySelector('img');
         if (img) imageObserver.unobserve(img);
