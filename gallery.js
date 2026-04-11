@@ -161,8 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = e.target.closest('.gallery-item');
       if (item) {
         const id = item.dataset.id;
-        const imageIndex = filteredImages.findIndex(img => img.id === id);
-        if (imageIndex !== -1) openModal(filteredImages[imageIndex], imageIndex);
+        const imageIndex = parseInt(item.dataset.index, 10);
+        if (!isNaN(imageIndex) && imageIndex >= 0 && imageIndex < filteredImages.length && filteredImages[imageIndex].id === id) {
+          openModal(filteredImages[imageIndex], imageIndex);
+        }
       }
     });
   }
@@ -279,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.createElement('div');
     el.className = 'gallery-item';
     el.dataset.id = imgData.id;
+    el.dataset.index = i;
 
     const x = c * (itemWidth + gap);
     const y = r * (itemHeight + gap);
