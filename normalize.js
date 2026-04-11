@@ -14,16 +14,27 @@ function normalizeManifest(data) {
     return encodeURI(formatted).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
   }
 
+
+  function extractBaseName(rawPath) {
+    if (!rawPath) return '';
+    return rawPath.split('/').pop().replace(/\.[^/.]+$/, '');
+  }
+
+  function extractFolder(rawPath, defaultFolderKey = null) {
+    if (!rawPath) return (defaultFolderKey || 'A').toUpperCase();
+    const folderSegments = rawPath.split('/');
+    const f = defaultFolderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
+    return f.toUpperCase();
+  }
+
   function normalizeEntry(entry, defaultFolderKey = null) {
     if (typeof entry === 'string') {
       const rawPath = entry;
       const path = formatPath(rawPath);
       const thumbnail = path;
-      const name = rawPath.split('/').pop().replace(/\.[^/.]+$/, '');
+      const name = extractBaseName(rawPath);
       const id = rawPath;
-      const folderSegments = rawPath.split('/');
-      const f = defaultFolderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
-      const folder = f.toUpperCase();
+      const folder = extractFolder(rawPath, defaultFolderKey);
       return { id, path, thumbnail, name, folder };
     }
 
@@ -34,10 +45,13 @@ function normalizeManifest(data) {
       const rawThumbnail = entry.thumbnail || rawPath;
       const path = formatPath(rawPath);
       const thumbnail = formatPath(rawThumbnail);
-      const name = (entry.name || entry.filename || rawPath.split('/').pop()).replace(/\.[^/.]+$/, '');
-      const folderSegments = rawPath.split('/');
-      const f = entry.folder || defaultFolderKey || (folderSegments[0] === '.' || folderSegments[0] === '' ? folderSegments[1] : folderSegments[0]) || 'A';
-      const folder = f.toUpperCase();
+      let name = entry.name || entry.filename;
+      if (name) {
+         name = name.replace(/\.[^/.]+$/, '');
+      } else {
+         name = extractBaseName(rawPath);
+      }
+      const folder = (entry.folder || extractFolder(rawPath, defaultFolderKey)).toUpperCase();
       return { id, path, thumbnail, name, folder };
     }
 
