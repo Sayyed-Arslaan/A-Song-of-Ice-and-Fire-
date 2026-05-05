@@ -173,8 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = e.target.closest('.gallery-item');
       if (item) {
         const id = item.dataset.id;
-        const imageIndex = filteredImages.findIndex(img => img.id === id);
-        if (imageIndex !== -1) openModal(filteredImages[imageIndex], imageIndex);
+        const imageIndex = parseInt(item.dataset.index, 10);
+        if (!isNaN(imageIndex) && imageIndex >= 0 && imageIndex < filteredImages.length && filteredImages[imageIndex].id === id) {
+          openModal(filteredImages[imageIndex], imageIndex);
+        }
       }
     });
   }
